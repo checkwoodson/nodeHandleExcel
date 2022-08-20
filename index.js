@@ -3,7 +3,7 @@ const fs = require("fs");
 const dayjs = require("dayjs");
 const _ = require("lodash");
 class excelHandle {
-  week;
+  weeks;
   readFile() {
     return new Promise((resolve, reject) => {
       fs.readdir(`${__dirname}/excel/`, (err, files) => {
@@ -20,7 +20,8 @@ class excelHandle {
   }
   dataHandle(data) {
     const dataArr = xlsx.utils.sheet_to_json(data);
-    this.week = dataArr[0];
+    this.weeks = dataArr[0];
+
     // 该hooks用于确定当月是否有那么多天数和格式化月份
     const { chartMonth, MonthFormat } = this.getMonth(dataArr);
     // 取出员工信息
@@ -45,15 +46,26 @@ class excelHandle {
   }
   handleMonth(time) {
     const { item, MonthFormat, chartMonth } = time;
-    const Attendance = [];
-    const day = {};
-    for (let i = 1; i <= chartMonth; i++) {
+    const Attendance = []; // 考勤统计
+    let key = 0;
+    let arr = [];
+    let i = 1;
+    Object.values(this.weeks).forEach((week, index) => {
+      let day = {};
       day[`${MonthFormat}-${i}`] = item[`__EMPTY_${i}`] === 1 ? 1 : 0;
-      console.log(Object.values(this.week));
-      // console.log(this.week[`__EMPTY_${i}`]);
-      Attendance.push(day);
-    }
-    // return Attendance;
+      i++;
+      arr.push(day);
+      if (week === "日") {
+        Attendance.push(arr);
+        key++;
+        arr = [];
+      }
+      if (index === chartMonth - 1 && week !== "日") {
+        Attendance.push(arr);
+      }
+    });
+
+    return Attendance;
   }
   getMonth(month) {
     const weekArr = Object.keys(month[0]);
