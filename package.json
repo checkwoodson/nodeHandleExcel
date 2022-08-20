@@ -1,0 +1,17 @@
+{
+  "name": "exceldetail",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "checkwoodson",
+  "license": "ISC",
+  "dependencies": {
+    "dayjs": "^1.11.5",
+    "lodash": "^4.17.21",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.18.10/xlsx-0.18.10.tgz"
+  }
+}
