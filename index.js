@@ -3,6 +3,7 @@ const fs = require("fs");
 const dayjs = require("dayjs");
 const _ = require("lodash");
 class excelHandle {
+  week;
   readFile() {
     return new Promise((resolve, reject) => {
       fs.readdir(`${__dirname}/excel/`, (err, files) => {
@@ -19,6 +20,7 @@ class excelHandle {
   }
   dataHandle(data) {
     const dataArr = xlsx.utils.sheet_to_json(data);
+    this.week = dataArr[0];
     // 该hooks用于确定当月是否有那么多天数和格式化月份
     const { chartMonth, MonthFormat } = this.getMonth(dataArr);
     // 取出员工信息
@@ -29,13 +31,8 @@ class excelHandle {
       )
       .map((item) => {
         const newData = {}; // 新表格的数据
-        const temp = [];
-        const day = {};
-        for (let i = 1; i <= chartMonth; i++) {
-          day[`${MonthFormat}-${i}`] = item[`__EMPTY_${i}`] === 1 ? 1 : 0;
-          temp.push(day);
-        }
-        console.log(temp);
+        // 对每个角色进行处理
+        this.handleMonth({ item, MonthFormat, chartMonth });
         newData["姓名"] = item["姓名"];
         newData["直播游戏"] = item["所属项目"];
         newData["基本工资"] = item["工资单价/天"];
@@ -45,6 +42,18 @@ class excelHandle {
       });
     // TODO：生成新的excel表
     // this.createNewExcel(newExcelData);
+  }
+  handleMonth(time) {
+    const { item, MonthFormat, chartMonth } = time;
+    const Attendance = [];
+    const day = {};
+    for (let i = 1; i <= chartMonth; i++) {
+      day[`${MonthFormat}-${i}`] = item[`__EMPTY_${i}`] === 1 ? 1 : 0;
+      console.log(Object.values(this.week));
+      // console.log(this.week[`__EMPTY_${i}`]);
+      Attendance.push(day);
+    }
+    // return Attendance;
   }
   getMonth(month) {
     const weekArr = Object.keys(month[0]);
