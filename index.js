@@ -31,18 +31,43 @@ class excelHandle {
           item["姓名"] && !Object.values(item).some((value) => value === "淘汰")
       )
       .map((item) => {
-        const newData = {}; // 新表格的数据
+        // 基础数据
+        const baseData = {
+          姓名: item["姓名"],
+          直播游戏: item["所属项目"],
+          基本工资: item["工资单价/天"] ?? "",
+          主播分成比例: item["主播分成比例"],
+        };
         // 对每个角色进行处理
         const nameMonth = this.handleMonth({ item, MonthFormat, chartMonth });
-        newData["姓名"] = item["姓名"];
-        newData["直播游戏"] = item["所属项目"];
-        newData["基本工资"] = item["工资单价/天"];
-        newData["主播分成比例"] = item["主播分成比例"];
-        // newData["核算周期"] =
-        return newData;
+        this.weeklyAttendance(nameMonth);
       });
     // TODO：生成新的excel表
     // this.createNewExcel(newExcelData);
+  }
+  weeklyAttendance(nameMonth) {
+    for (let week = 0; week <= nameMonth.length; week++) {
+      switch (week) {
+        case 0:
+          console.log(nameMonth[week]);
+          break;
+        case 1:
+          console.log(nameMonth[week]);
+          break;
+        case 2:
+          console.log(nameMonth[week]);
+          break;
+        case 3:
+          console.log(nameMonth[week]);
+          break;
+        case 4:
+          console.log(nameMonth[week]);
+          break;
+        default:
+          console.error("周数超出范围||没有该周数");
+          break;
+      }
+    }
   }
   handleMonth(time) {
     const { item, MonthFormat, chartMonth } = time;
