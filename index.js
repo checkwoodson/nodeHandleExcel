@@ -33,7 +33,7 @@ class excelHandle {
       .map((item) => {
         const newData = {}; // 新表格的数据
         // 对每个角色进行处理
-        this.handleMonth({ item, MonthFormat, chartMonth });
+        const nameMonth = this.handleMonth({ item, MonthFormat, chartMonth });
         newData["姓名"] = item["姓名"];
         newData["直播游戏"] = item["所属项目"];
         newData["基本工资"] = item["工资单价/天"];
@@ -64,7 +64,6 @@ class excelHandle {
         Attendance.push(arr);
       }
     });
-
     return Attendance;
   }
   getMonth(month) {
@@ -75,26 +74,6 @@ class excelHandle {
     const monthObj = _.pick(month[1], weekArr);
     if (chartMonth !== Object.values(monthObj).length)
       throw new Error("月份不匹配");
-    // const newMonthArr = [];
-    // let key = 0;
-    // let arr = [];
-    // let i = 1;
-    // const monthLength = Object.values(month[0]).length;
-
-    // Object.values(month[0]).forEach((item, index) => {
-    //   let tem = {};
-    //   tem[`${MonthFormat}-${i}`] = 0;
-    //   i++;
-    //   arr.push(tem);
-    //   if (item == "日") {
-    //     newMonthArr.push(arr);
-    //     key++;
-    //     arr = [];
-    //   }
-    //   if (index == monthLength - 1 && item != "日") {
-    //     newMonthArr.push(arr);
-    //   }
-    // });
     return { chartMonth, MonthFormat };
   }
   // 生成处理好的excel表
