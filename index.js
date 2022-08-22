@@ -40,44 +40,61 @@ class excelHandle {
         };
         // 对每个角色进行处理
         const nameMonth = this.handleMonth({ item, MonthFormat, chartMonth });
-        this.weeklyAttendance(nameMonth);
+        const weeklyData = this.weeklyAttendance(nameMonth);
+        const anchor = [];
+        for (let p in weeklyData) {
+          const newData = Object.assign({}, baseData, weeklyData[p], {
+            应发工资: baseData["基本工资"] * weeklyData[p]["实出勤天数"] ?? 0,
+          });
+          anchor.push(newData);
+        }
+        return anchor;
       });
-    // TODO：生成新的excel表
-    // this.createNewExcel(newExcelData);
+    this.createNewExcel(newExcelData);
   }
+  // 周考勤数据处理
   weeklyAttendance(nameMonth) {
-    for (let week = 0; week <= nameMonth.length; week++) {
-      switch (week) {
-        case 0:
-          console.log(nameMonth[week]);
-          break;
-        case 1:
-          console.log(nameMonth[week]);
-          break;
-        case 2:
-          console.log(nameMonth[week]);
-          break;
-        case 3:
-          console.log(nameMonth[week]);
-          break;
-        case 4:
-          console.log(nameMonth[week]);
-          break;
-        default:
-          console.error("周数超出范围||没有该周数");
-          break;
+    const monthAttendance = [];
+    for (let week = 0; week < nameMonth.length; week++) {
+      const data = this.attendanceStatistics(nameMonth, week);
+      monthAttendance.push(data);
+    }
+    return monthAttendance;
+  }
+  // 统计考勤次数
+  attendanceStatistics(nameMonth, week) {
+    const cycle = {};
+    const weekLastDay = Object.keys(nameMonth[week]).length;
+    cycle["核算工资周期"] = `${Object.keys(nameMonth[week][0])}/${Object.keys(
+      nameMonth[week][weekLastDay - 1]
+    )}`;
+    cycle["应出勤天数"] = nameMonth[week].length;
+    let count = 0;
+    for (let i = 0; i < nameMonth[week].length; i++) {
+      for (let j in nameMonth[week][i]) {
+        if (nameMonth[week][i][j] === 1) {
+          count++;
+        }
       }
     }
+    cycle["实出勤天数"] = count;
+    return cycle;
   }
   handleMonth(time) {
     const { item, MonthFormat, chartMonth } = time;
     const Attendance = []; // 考勤统计
     let key = 0;
     let arr = [];
-    let i = 1;
+    let i = 0;
     Object.values(this.weeks).forEach((week, index) => {
       let day = {};
-      day[`${MonthFormat}-${i}`] = item[`__EMPTY_${i}`] === 1 ? 1 : 0;
+      if (i === 0) {
+        ++i;
+        day[`${MonthFormat}-${i}`] =
+          item[MonthFormat.replace(/-/, "年") + "月"] === 1 ? 1 : 0;
+      } else {
+        day[`${MonthFormat}-${i}`] = item[`__EMPTY_${i - 1}`] === 1 ? 1 : 0;
+      }
       i++;
       arr.push(day);
       if (week === "日") {
@@ -104,8 +121,15 @@ class excelHandle {
   // 生成处理好的excel表
   createNewExcel(data) {
     const workBook = xlsx.utils.book_new();
-    const newSheet = xlsx.utils.json_to_sheet(data);
-    xlsx.utils.book_append_sheet(workBook, newSheet, "工资结算");
+    let weekData = [];
+    for (let i = 0; i < data[0].length; i++) {
+      let temp = [];
+      data.forEach((item) => temp.push(item[i]));
+      weekData.push(temp);
+      const sheetName = `第${i + 1}周`;
+      const sheet = xlsx.utils.json_to_sheet(weekData[i]);
+      xlsx.utils.book_append_sheet(workBook, sheet, sheetName);
+    }
     xlsx.writeFile(workBook, "工资结算.xlsx");
   }
 }
