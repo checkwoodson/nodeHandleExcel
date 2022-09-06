@@ -3,7 +3,6 @@ const fs = require("fs");
 const dayjs = require("dayjs");
 const _ = require("lodash");
 class excelHandle {
-  weeks;
   readFile() {
     return new Promise((resolve, reject) => {
       fs.readdir(`${__dirname}/excel/`, (err, files) => {
@@ -12,11 +11,57 @@ class excelHandle {
       });
     });
   }
-  readExcel() {
-    this.readFile().then((files) => {
-      const workBook = xlsx.readFile(`${__dirname}/excel/${files}`);
-      this.dataHandle(workBook.Sheets["考勤"]);
+  async readExcel() {
+    await this.readFile().then((files) => {
+      const workBook = files.map((file) => {
+        return xlsx.readFile(`${__dirname}/excel/${file}`);
+      });
+      workBook.forEach((item) => {
+        item.Sheets['考勤'] && this.dataHandle(item.Sheets['考勤'])
+      });
+      const game = workBook
+        .map((item) => {
+          return item.Sheets["工资明细表（对公）"];
+        })
+        .filter((item) => typeof item !== "undefined");
+      game.length > 0  && this.gameConsume(game);
     });
+  }
+  gameConsume(value) {
+    // 获取文件中的行和列
+    const reg = new RegExp("小计");
+    const allGame = {};
+    value.forEach((item) => {
+      const { r: totalRow } = xlsx.utils.decode_range(item["!ref"]).e;
+      for (let r = 0; r < totalRow; r++) {
+        const everyCol = item[xlsx.utils.encode_cell({ r, c: 0 })];
+        if (reg.test(everyCol?.v)) {
+          const gameName = everyCol.v.split("-")[0];
+          const liveValue = item[xlsx.utils.encode_cell({ r, c: 12 })].v;
+          if (typeof allGame[gameName] === "undefined") {
+            allGame[gameName] = liveValue;
+          } else {
+            allGame[gameName] += liveValue;
+          }
+        }
+      }
+    });
+    this.gameStatistics(allGame);
+  }
+  // 生成以直播游戏来统计并生成文件
+  gameStatistics(value) {
+    const gameAll = []
+    for(let key in value){
+      const game ={
+        '直播游戏':key,
+        '总价': value[key]
+      }
+      gameAll.push(game)
+    }
+    const workBook = xlsx.utils.book_new();
+    const ws = xlsx.utils.json_to_sheet(gameAll);
+    xlsx.utils.book_append_sheet(workBook, ws, "直播游戏总计");
+    xlsx.writeFile(workBook, '直播游戏消费.xlsx')
   }
   dataHandle(data) {
     const dataArr = xlsx.utils.sheet_to_json(data);
@@ -50,6 +95,7 @@ class excelHandle {
         }
         return anchor;
       });
+    // TODO：生成新的excel表
     this.createNewExcel(newExcelData);
   }
   // 周考勤数据处理
@@ -120,6 +166,7 @@ class excelHandle {
   }
   // 生成处理好的excel表
   createNewExcel(data) {
+    if (!data[0]) return new ErrorEvent("excel表格数据无效！！");
     const workBook = xlsx.utils.book_new();
     let weekData = [];
     for (let i = 0; i < data[0].length; i++) {
